@@ -1,4 +1,5 @@
-const { Restaurant, Category, Comment, User } = require('../models')
+const { QueryTypes } = require('sequelize')
+const { Restaurant, Category, Comment, User, sequelize } = require('../models')
 const { getOffset, getPagination } = require('../helpers/pagination-helper')
 
 const restaurantController = {
@@ -97,23 +98,45 @@ const restaurantController = {
       })
       .catch(err => next(err))
   },
-  getTopRestaurants: (req, res, next) => {
-    return Restaurant.findAll({
-      include: [{
-        model: User, as: 'FavoritedUsers'
-      }]
-    })
-      .then(restaurants => {
-        const result = restaurants.map(r => ({
-          ...r.dataValues,
-          description: r.dataValues.description.substring(0, 50),
-          favoritedCount: r.FavoritedUsers.length,
-          isFavorited: req.user && req.user.FavoritedRestaurants.some(f => f.id === r.id)
-        }))
-          .sort((a, b) => b.favoritedCount - a.favoritedCount).slice(0, 10)
-        res.render('top-restaurants', { restaurants: result })
+  getTopRestaurants: async (req, res, next) => {
+    try {
+      const resultRestaurants = []
+      const topRestaurants = await sequelize.query(
+        `SELECT Restaurants.* , COUNT(user_id) AS FavoritedUsers
+        FROM Restaurants
+        JOIN Favorites
+        ON Restaurants.id = Favorites.restaurant_id
+        GROUP BY restaurant_id
+        ORDER BY FavoritedUsers DESC
+        LIMIT 10`,
+        { type: QueryTypes.SELECT }
+      )
+      // 整理撈出來的資料
+      topRestaurants.forEach(r => {
+        r.description = r.description.substring(0, 50)
+        r.favoritedCount = r.FavoritedUsers
+        r.isFavorited = req.user && req.user.FavoritedRestaurants.some(f => f.id === r.id)
       })
-      .catch(next)
+      resultRestaurants.push(...topRestaurants)
+      // 如果被收藏的餐廳不滿10間，就隨機撈其他餐廳湊滿10間
+      if (topRestaurants.length < 10) {
+        const randomRestaurants = await Restaurant.findAll({
+          order: sequelize.literal('rand()'),
+          limit: 10 - topRestaurants.length,
+          raw: true
+        })
+        // 整理隨機餐廳的資料
+        randomRestaurants.forEach(r => {
+          r.description = r.description.substring(0, 50)
+          r.favoritedCount = r.FavoritedUsers || 0
+          r.isFavorited = req.user && req.user.FavoritedRestaurants.some(f => f.id === r.id)
+        })
+        resultRestaurants.push(...randomRestaurants)
+      }
+      res.render('top-restaurants', { restaurants: resultRestaurants })
+    } catch (err) {
+      next(err)
+    }
   }
 }
 
