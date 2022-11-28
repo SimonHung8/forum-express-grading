@@ -7,18 +7,75 @@
   <div class="col-8">
     <h5>{{userData.name}}</h5>
     <p>{{userData.email}}</p>
+    <p class="m-0"><strong>{{userData.commentedRestaurants.length}}</strong> 已評論餐廳</p>
+    <p class="m-0"><strong>{{userData.FavoritedRestaurants.length}}</strong> 收藏的餐廳</p>
+    <p class="m-0"><strong>{{userData.Followings.length}}</strong> Followings(追蹤者)</p>
+    <p><strong>{{userData.Followers.length}}</strong> Followers(追隨者)</p>
     {{#ifCond user.id userData.id}}
     <a href="/users/{{user.id}}/edit" class="btn btn-primary">Edit</a>
+    {{else}}
+    {{#if userData.isFollowed }}
+    <form action="/following/{{userData.id}}?_method=DELETE" method="POST" style="display: contents;">
+      <button type="submit" class="btn btn-danger">取消追蹤</button>
+    </form>
+    {{else}}
+    <form action="/following/{{userData.id}}" method="POST" style="display: contents;">
+      <button type="submit" class="btn btn-primary">追蹤</button>
+    </form>
+    {{/if}}
     {{/ifCond}}
   </div>
 </div>
-<div class="card mt-3">
-  <h5 class="card-header">{{userData.commentedRestaurants.length}}已評論餐廳</h5>
-  <div class="card-body">
-    {{#each userData.commentedRestaurants}}
-    <a href="/restaurants/{{this.id}}" style="text-decoration:none;">
-      <img src="{{this.image}}" title="{{this.name}}" class="m-3" style="height:100px; width:100px; object-fit:cover">
-    </a>
-    {{/each}}
+
+<div class="row">
+  <div class="col-4">
+    <div class="card mt-3">
+      <h5 class="card-header">{{userData.Followings.length}} Followings(追蹤者)</h5>
+      <div class="card-body">
+        {{#each userData.Followings}}
+        <a href="/users/{{this.id}}" style="text-decoration:none;">
+          <img
+            src="{{#if this.image}}{{this.image}}{{else}}https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg{{/if}}"
+            title="{{this.name}}" class="m-3" style="height:100px; width:100px; object-fit:cover">
+        </a>
+        {{/each}}
+      </div>
+    </div>
+    <div class="card mt-3">
+      <h5 class="card-header">{{userData.Followers.length}} Followers(追隨者)</h5>
+      <div class="card-body">
+        {{#each userData.Followers}}
+        <a href="/users/{{this.id}}" style="text-decoration:none;">
+          <img
+            src="{{#if this.image}}{{this.image}}{{else}}https://i.pinimg.com/originals/f1/0f/f7/f10ff70a7155e5ab666bcdd1b45b726d.jpg{{/if}}"
+            title="{{this.name}}" class="m-3" style="height:100px; width:100px; object-fit:cover">
+        </a>
+        {{/each}}
+      </div>
+    </div>
+  </div>
+  <div class="col-8">
+    <div class="card mt-3">
+      <h5 class="card-header">{{userData.commentedRestaurants.length}} 已評論餐廳</h5>
+      <div class="card-body">
+        {{#each userData.commentedRestaurants}}
+        <a href="/restaurants/{{this.id}}" style="text-decoration:none;">
+          <img src="{{this.image}}" title="{{this.name}}" class="m-3"
+            style="height:100px; width:100px; object-fit:cover">
+        </a>
+        {{/each}}
+      </div>
+    </div>
+    <div class="card mt-3">
+      <h5 class="card-header">{{userData.FavoritedRestaurants.length}} 收藏的餐廳</h5>
+      <div class="card-body">
+        {{#each userData.FavoritedRestaurants}}
+        <a href="/restaurants/{{this.id}}" style="text-decoration:none;">
+          <img src="{{this.image}}" title="{{this.name}}" class="m-3"
+            style="height:100px; width:100px; object-fit:cover">
+        </a>
+        {{/each}}
+      </div>
+    </div>
   </div>
 </div>

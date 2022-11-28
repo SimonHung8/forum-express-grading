@@ -37,9 +37,12 @@ const userController = {
   },
   getUser: (req, res, next) => {
     return User.findByPk(req.params.id, {
-      include: [{
-        model: Comment, include: Restaurant
-      }]
+      include: [
+        { model: Comment, include: Restaurant },
+        { model: User, as: 'Followers' },
+        { model: User, as: 'Followings' },
+        { model: Restaurant, as: 'FavoritedRestaurants' }
+      ]
     })
       .then(user => {
         if (!user) throw new Error("User didn't exist!")
@@ -49,6 +52,8 @@ const userController = {
           if (!acc.some(restaurant => restaurant.id === comment.restaurantId)) acc.push(comment.Restaurant)
           return acc
         }, [])
+        // 有沒有追蹤過
+        userData.isFollowed = req.user.Followings.some(f => f.id === userData.id)
         return res.render('users/profile', {
           user: getUser(req),
           userData
